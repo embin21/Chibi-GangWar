@@ -400,23 +400,18 @@ final class GameCoordinator: NSObject, SCNSceneRendererDelegate {
         jumpTime = 0.8
     }
 
-    func attack() {
-        guard let body = body else { return }
+    
+func attack() {
+    guard let body = body else { return }
 
-        let originalScale = body.scale
+    body.removeAllActions()
 
-        body.removeAllActions()
-        body.runAction(
-            SCNAction.sequence([
-                SCNAction.scale(
-                    to: SCNVector3(1.2, 0.9, 1.2),
-                    duration: 0.08
-                ),
-                SCNAction.scale(
-                    to: originalScale,
-                    duration: 0.12
-                )
-            ])
-        )
-    }
+    body.runAction(
+        SCNAction.sequence([
+            SCNAction.scale(to: 1.2, duration: 0.08),
+            SCNAction.scale(to: 1.0, duration: 0.12)
+        ])
+    )
+}
+
 }
