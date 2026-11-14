@@ -341,7 +341,7 @@ struct GameSceneView: UIViewRepresentable {
 
                 let signNode = SCNNode(geometry: sign)
                 signNode.position = SCNVector3(
-                    Float(side * 9.35),
+                    Float(side) * 9.35,
                     Float(height * 0.7),
                     Float(-index * 11)
                 )
