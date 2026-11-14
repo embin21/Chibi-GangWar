@@ -1,59 +1,66 @@
 
+
 import SwiftUI
 import SceneKit
+import UIKit
 
 struct GameRootView: View {
-    @State private var started = false
+    @State private var isPlaying = false
     @State private var movement = CGSize.zero
-    @State private var attackPulse = 0
-    @State private var jumpPulse = 0
-    @State private var crouching = false
+    @State private var attackCount = 0
+    @State private var jumpCount = 0
+    @State private var isCrouching = false
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [.black, .red.opacity(0.75), .black],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            if started {
+            if isPlaying {
                 gameScreen
             } else {
-                menuScreen
+                mainMenu
             }
         }
         .preferredColorScheme(.dark)
     }
 
-    private var menuScreen: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            Text("CHIBI")
-                .font(.system(size: 52, weight: .black))
-                .foregroundColor(.red)
+    private var mainMenu: some View {
+        ZStack {
+            LinearGradient(
+                colors: [.black, .red.opacity(0.7), .black],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
-            Text("GANG WAR")
-                .font(.system(size: 30, weight: .heavy))
+            VStack(spacing: 18) {
+                Spacer()
 
-            Text("CITY DOMINATION")
-                .font(.caption)
-                .tracking(5)
-                .foregroundColor(.gray)
+                Text("CHIBI")
+                    .font(.system(size: 58, weight: .black))
+                    .foregroundColor(.red)
 
-            Spacer()
+                Text("GANG WAR")
+                    .font(.system(size: 36, weight: .black))
+                    .foregroundColor(.white)
 
-            Button("VÀO GAME") {
-                started = true
+                Text("CITY DOMINATION")
+                    .tracking(6)
+                    .foregroundColor(.gray)
+
+                Spacer()
+
+                Button {
+                    isPlaying = true
+                } label: {
+                    Text("VÀO GAME")
+                        .font(.title3.bold())
+                        .foregroundColor(.white)
+                        .frame(width: 230, height: 58)
+                        .background(Color.red)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
+
+                Spacer()
             }
-            .font(.headline.bold())
-            .foregroundColor(.white)
-            .frame(width: 220, height: 55)
-            .background(Color.red)
-            .cornerRadius(12)
-
-            Spacer()
         }
     }
 
@@ -61,22 +68,47 @@ struct GameRootView: View {
         ZStack {
             GameSceneView(
                 movement: movement,
-                attackPulse: attackPulse,
-                jumpPulse: jumpPulse,
-                crouching: crouching
+                attackCount: attackCount,
+                jumpCount: jumpCount,
+                isCrouching: isCrouching
             )
             .ignoresSafeArea()
 
             VStack {
                 HStack {
-                    Text("CHIBI GANG WAR")
-                        .font(.headline.bold())
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("CHIBI GANG WAR")
+                            .font(.headline.bold())
+                        Text("CẤP ĐỘ 1")
+                            .font(.caption.bold())
+                            .foregroundColor(.red)
+                    }
+
                     Spacer()
-                    Text("LV.1")
-                        .foregroundColor(.red)
+
+                    Text("TIỀN: 0")
+                        .font(.caption.bold())
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 10)
+                .padding()
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("HP")
+                            .font(.caption.bold())
+                        ProgressView(value: 1)
+                            .tint(.red)
+                            .frame(width: 115)
+
+                        Text("NĂNG LƯỢNG")
+                            .font(.caption.bold())
+                        ProgressView(value: 1)
+                            .tint(.blue)
+                            .frame(width: 115)
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal)
 
                 Spacer()
 
@@ -86,48 +118,46 @@ struct GameRootView: View {
 
                     Spacer()
 
-                    VStack(spacing: 12) {
-                        HStack(spacing: 14) {
-                            controlButton(
+                    VStack(spacing: 13) {
+                        HStack(spacing: 12) {
+                            roundButton(
                                 "NGỒI",
                                 icon: "arrow.down",
-                                active: crouching,
-                                color: .orange
+                                color: isCrouching ? .green : .orange
                             ) {
-                                crouching.toggle()
+                                isCrouching.toggle()
                             }
 
-                            controlButton(
+                            roundButton(
                                 "NHẢY",
                                 icon: "arrow.up",
                                 color: .blue
                             ) {
-                                jumpPulse += 1
+                                jumpCount += 1
                             }
                         }
 
-                        controlButton(
+                        roundButton(
                             "TẤN CÔNG",
                             icon: "hand.raised.fill",
                             color: .red,
-                            size: 78
+                            size: 82
                         ) {
-                            attackPulse += 1
+                            attackCount += 1
                         }
                     }
                 }
-                .padding(.horizontal, 25)
+                .padding(.horizontal, 24)
                 .padding(.bottom, 25)
             }
         }
     }
 
-    private func controlButton(
+    private func roundButton(
         _ title: String,
         icon: String,
-        active: Bool = false,
         color: Color,
-        size: CGFloat = 62,
+        size: CGFloat = 64,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -135,15 +165,15 @@ struct GameRootView: View {
                 Image(systemName: icon)
                     .font(.system(size: 22, weight: .bold))
                 Text(title)
-                    .font(.system(size: 10, weight: .heavy))
+                    .font(.system(size: 9, weight: .heavy))
             }
             .foregroundColor(.white)
             .frame(width: size, height: size)
-            .background(active ? Color.green : color)
+            .background(color)
             .clipShape(Circle())
-            .overlay(
-                Circle().stroke(Color.white.opacity(0.7), lineWidth: 2)
-            )
+            .overlay {
+                Circle().stroke(.white.opacity(0.7), lineWidth: 2)
+            }
         }
         .buttonStyle(.plain)
     }
@@ -154,28 +184,22 @@ struct JoystickView: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let center = CGPoint(
-                x: geometry.size.width / 2,
-                y: geometry.size.height / 2
-            )
+            let center = geometry.size.width / 2
 
             ZStack {
                 Circle()
-                    .fill(Color.black.opacity(0.55))
-                    .overlay(
-                        Circle().stroke(Color.white.opacity(0.5), lineWidth: 2)
-                    )
+                    .fill(.black.opacity(0.55))
+                    .overlay {
+                        Circle().stroke(.white.opacity(0.6), lineWidth: 2)
+                    }
 
                 Circle()
-                    .fill(Color.red.opacity(0.9))
+                    .fill(.red)
                     .frame(width: 52, height: 52)
-                    .overlay(
-                        Circle().stroke(Color.white, lineWidth: 2)
-                    )
-                    .position(
-                        x: center.x + movement.width,
-                        y: center.y + movement.height
-                    )
+                    .overlay {
+                        Circle().stroke(.white, lineWidth: 2)
+                    }
+                    .offset(movement)
             }
             .contentShape(Circle())
             .gesture(
@@ -184,7 +208,7 @@ struct JoystickView: View {
                         let dx = value.translation.width
                         let dy = value.translation.height
                         let distance = sqrt(dx * dx + dy * dy)
-                        let limit: CGFloat = 35
+                        let limit = center - 28
 
                         if distance > limit {
                             let scale = limit / distance
@@ -206,12 +230,12 @@ struct JoystickView: View {
 
 struct GameSceneView: UIViewRepresentable {
     var movement: CGSize
-    var attackPulse: Int
-    var jumpPulse: Int
-    var crouching: Bool
+    var attackCount: Int
+    var jumpCount: Int
+    var isCrouching: Bool
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
+    func makeCoordinator() -> GameCoordinator {
+        GameCoordinator()
     }
 
     func makeUIView(context: Context) -> SCNView {
@@ -220,131 +244,179 @@ struct GameSceneView: UIViewRepresentable {
 
         view.scene = scene
         view.backgroundColor = UIColor(
-            red: 0.08, green: 0.08, blue: 0.1, alpha: 1
+            red: 0.08,
+            green: 0.07,
+            blue: 0.10,
+            alpha: 1
         )
         view.isPlaying = true
         view.delegate = context.coordinator
+        view.antialiasingMode = .multisampling4X
+
+        let player = SCNNode()
+        player.name = "player"
+
+        let bodyGeometry = SCNCapsule(
+            capRadius: 0.35,
+            height: 1.5
+        )
+        bodyGeometry.firstMaterial?.diffuse.contents = UIColor.red
+
+        let body = SCNNode(geometry: bodyGeometry)
+        body.position.y = 0.75
+        player.addChildNode(body)
 
         let camera = SCNNode()
         camera.camera = SCNCamera()
-        camera.position = SCNVector3(0, 4, 8)
-        camera.eulerAngles.x = -0.25
-
-        let player = SCNNode()
-        player.position = SCNVector3(0, 0, 0)
-
-        let body = SCNCapsule(capRadius: 0.4, height: 1.6)
-        body.firstMaterial?.diffuse.contents = UIColor.red
-
-        let bodyNode = SCNNode(geometry: body)
-        bodyNode.position.y = 0.8
-        player.addChildNode(bodyNode)
-
+        camera.position = SCNVector3(0, 3.5, 7)
+        camera.eulerAngles.x = -0.28
+        camera.camera?.fieldOfView = 65
         player.addChildNode(camera)
+
         scene.rootNode.addChildNode(player)
 
         let ground = SCNFloor()
         ground.reflectivity = 0
-        ground.firstMaterial?.diffuse.contents = UIColor.darkGray
+        ground.firstMaterial?.diffuse.contents = UIColor(
+            red: 0.18,
+            green: 0.18,
+            blue: 0.20,
+            alpha: 1
+        )
         scene.rootNode.addChildNode(SCNNode(geometry: ground))
 
-        for i in -4...4 {
-            let height = CGFloat(arc4random_uniform(5) + 2)
-            let building = SCNBox(
-                width: 2,
-                height: height,
-                length: 2,
-                chamferRadius: 0
-            )
-            building.firstMaterial?.diffuse.contents = UIColor.gray
-
-            let node = SCNNode(geometry: building)
-            node.position = SCNVector3(
-                Float(i * 4),
-                Float(height / 2),
-                -8
-            )
-            scene.rootNode.addChildNode(node)
-        }
+        createCity(in: scene)
 
         context.coordinator.player = player
-        context.coordinator.body = bodyNode
+        context.coordinator.body = body
         context.coordinator.camera = camera
 
         return view
     }
 
     func updateUIView(_ uiView: SCNView, context: Context) {
-        context.coordinator.movement = movement
-        context.coordinator.crouching = crouching
+        let coordinator = context.coordinator
 
-        if attackPulse != context.coordinator.lastAttack {
-            context.coordinator.lastAttack = attackPulse
-            context.coordinator.attack()
+        coordinator.movement = movement
+        coordinator.isCrouching = isCrouching
+
+        if attackCount != coordinator.lastAttack {
+            coordinator.lastAttack = attackCount
+            coordinator.attack()
         }
 
-        if jumpPulse != context.coordinator.lastJump {
-            context.coordinator.lastJump = jumpPulse
-            context.coordinator.jump()
+        if jumpCount != coordinator.lastJump {
+            coordinator.lastJump = jumpCount
+            coordinator.jump()
         }
     }
 
-    class Coordinator: NSObject, SCNSceneRendererDelegate {
-        var player: SCNNode?
-        var body: SCNNode?
-        var camera: SCNNode?
+    private func createCity(in scene: SCNScene) {
+        for x in -5...5 {
+            for z in [-12, -20, 12, 20] {
+                let height = CGFloat(
+                    Int.random(in: 3...9)
+                )
 
-        var movement = CGSize.zero
-        var crouching = false
-        var lastAttack = 0
-        var lastJump = 0
-        var jumpTime: Float = 0
+                let building = SCNBox(
+                    width: 3,
+                    height: height,
+                    length: 3,
+                    chamferRadius: 0.1
+                )
 
-        func renderer(
-            _ renderer: SCNSceneRenderer,
-            updateAtTime time: TimeInterval
-        ) {
-            guard let player = player else { return }
+                building.firstMaterial?.diffuse.contents =
+                    UIColor.darkGray
 
-            let dx = Float(movement.width / 35)
-            let dz = Float(movement.height / 35)
+                let node = SCNNode(geometry: building)
+                node.position = SCNVector3(
+                    Float(x * 5),
+                    Float(height / 2),
+                    Float(z)
+                )
 
-            let speed: Float = 0.10
-
-            player.position.x += dx * speed
-            player.position.z += dz * speed
-
-            if abs(dx) > 0.1 || abs(dz) > 0.1 {
-                player.eulerAngles.y = atan2(dx, dz)
-            }
-
-            if let body = body {
-                body.scale.y = crouching ? 0.55 : 1.0
-                body.position.y = crouching ? 0.45 : 0.8
-            }
-
-            if jumpTime > 0 {
-                jumpTime -= 0.04
-                player.position.y = sin(jumpTime * .pi) * 1.3
-            } else {
-                player.position.y = 0
+                scene.rootNode.addChildNode(node)
             }
         }
+    }
+}
 
-        func jump() {
-            guard jumpTime <= 0 else { return }
-            jumpTime = 1
+final class GameCoordinator: NSObject, SCNSceneRendererDelegate {
+    var player: SCNNode?
+    var body: SCNNode?
+    var camera: SCNNode?
+
+    var movement = CGSize.zero
+    var isCrouching = false
+
+    var lastAttack = 0
+    var lastJump = 0
+
+    private var jumpTime: Float = 0
+    private var lastFrame: TimeInterval = 0
+
+    func renderer(
+        _ renderer: SCNSceneRenderer,
+        updateAtTime time: TimeInterval
+    ) {
+        guard let player = player else { return }
+
+        let delta = lastFrame == 0
+            ? Float(1.0 / 60.0)
+            : Float(min(time - lastFrame, 0.05))
+
+        lastFrame = time
+
+        let dx = Float(movement.width / 45)
+        let dz = Float(movement.height / 45)
+
+        let speed: Float = isCrouching ? 1.4 : 3.5
+
+        player.position.x += dx * speed * delta
+        player.position.z += dz * speed * delta
+
+        if abs(dx) > 0.08 || abs(dz) > 0.08 {
+            player.eulerAngles.y = atan2(dx, dz)
         }
 
-        func attack() {
-            guard let body = body else { return }
+        if let body = body {
+            body.scale.y = isCrouching ? 0.6 : 1
+            body.position.y = isCrouching ? 0.45 : 0.75
+        }
 
-            body.runAction(
-                SCNAction.sequence([
-                    SCNAction.scale(to: 1.2, duration: 0.08),
-                    SCNAction.scale(to: crouching ? 0.55 : 1.0, duration: 0.12)
-                ])
+        if jumpTime > 0 {
+            jumpTime -= delta
+            player.position.y = max(
+                0,
+                sin((1 - jumpTime) * .pi) * 1.2
             )
+        } else {
+            player.position.y = 0
         }
+    }
+
+    func jump() {
+        guard jumpTime <= 0 else { return }
+        jumpTime = 0.8
+    }
+
+    func attack() {
+        guard let body = body else { return }
+
+        let originalScale = body.scale
+
+        body.removeAllActions()
+        body.runAction(
+            SCNAction.sequence([
+                SCNAction.scale(
+                    to: SCNVector3(1.2, 0.9, 1.2),
+                    duration: 0.08
+                ),
+                SCNAction.scale(
+                    to: originalScale,
+                    duration: 0.12
+                )
+            ])
+        )
     }
 }
