@@ -1,3 +1,4 @@
+
 import UIKit
 import SwiftUI
 
@@ -19,5 +20,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.window = window
 
         return true
+    }
+
+    func application(
+        _ application: UIApplication,
+        supportedInterfaceOrientationsFor window: UIWindow?
+    ) -> UIInterfaceOrientationMask {
+        return .landscape
     }
 }
