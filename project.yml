@@ -1,21 +1,18 @@
-
 name: ChibiGangWar
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: com.chibigangwar
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "15.0"
 targets:
   ChibiGangWar:
     type: application
     platform: iOS
     sources:
-      - path: ChibiGangWar
+      - ChibiGangWar
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.chibigangwar.vn
-        PRODUCT_NAME: ChibiGangWar
-        INFOPLIST_KEY_CFBundleDisplayName: "Chibi Gang War"
+        TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-        TARGETED_DEVICE_FAMILY: "1,2"
-        CODE_SIGNING_ALLOWED: NO
-        GENERATE_INFOPLIST_FILE: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+        CODE_SIGN_STYLE: Automatic
