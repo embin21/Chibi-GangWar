@@ -5,12 +5,21 @@ import SwiftUI
 import SceneKit
 import UIKit
 
+
 struct GameRootView: View {
     @State private var movement = CGSize.zero
     @State private var cameraYaw: Float = 0
+    @State private var cameraStartYaw: Float = 0
+
     @State private var attackCount = 0
     @State private var jumpCount = 0
     @State private var crouching = false
+
+    @State private var activePanel: String? = nil
+    @State private var showChat = false
+
+    private let gold = Color(red: 1, green: 0.72, blue: 0.08)
+    private let red = Color(red: 0.85, green: 0.04, blue: 0.10)
 
     var body: some View {
         GeometryReader { geo in
@@ -24,7 +33,7 @@ struct GameRootView: View {
                 )
                 .ignoresSafeArea()
 
-                // Vùng vuốt camera độc lập ở bên phải
+                // Vuốt camera ở nửa phải màn hình
                 HStack(spacing: 0) {
                     Color.clear
                         .frame(width: geo.size.width * 0.48)
@@ -32,170 +41,473 @@ struct GameRootView: View {
                     Color.clear
                         .contentShape(Rectangle())
                         .gesture(
-                            DragGesture()
+                            DragGesture(minimumDistance: 5)
                                 .onChanged { value in
-                                    cameraYaw -= Float(
-                                        value.translation.width
-                                    ) * 0.004
+                                    cameraYaw = cameraStartYaw
+                                        - Float(value.translation.width) * 0.004
+                                }
+                                .onEnded { _ in
+                                    cameraStartYaw = cameraYaw
                                 }
                         )
                 }
                 .ignoresSafeArea()
 
-                VStack {
-                    hud
+                VStack(spacing: 0) {
+                    topBar
+
+                    HStack(alignment: .top) {
+                        leftMenu
+
+                        Spacer()
+
+                        rightInformation
+                    }
+                    .padding(.top, 12)
+
                     Spacer()
-                    controls
+
+                    bottomHUD
                 }
-                .padding(.horizontal, 22)
-                .padding(.vertical, 14)
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                .padding(.bottom, 8)
+
+                if let panel = activePanel {
+                    menuPanel(panel)
+                }
             }
         }
         .preferredColorScheme(.dark)
     }
 
-    private var hud: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("CHIBI GANG WAR")
-                    .font(.headline.bold())
-                    .foregroundColor(.white)
+    // MARK: - TOP BAR
 
-                Text("LEVEL 1")
-                    .font(.caption.bold())
-                    .foregroundColor(.orange)
+    private var topBar: some View {
+        HStack(spacing: 8) {
+            // Avatar và thông tin nhân vật
+            HStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.black)
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 34))
+                        .foregroundColor(.white)
+                }
+                .frame(width: 58, height: 58)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(gold, lineWidth: 2)
+                }
 
-                ProgressView(value: 1)
-                    .tint(.red)
-                    .frame(width: 130)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Nhật Bin Trần")
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundColor(.white)
+
+                    Text("Lv.50       EXP: 85%")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(gold)
+
+                    ProgressView(value: 0.85)
+                        .tint(gold)
+                        .frame(width: 125)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.red)
+                        Text("HP 100/100")
+                            .foregroundColor(.white)
+                    }
+                    .font(.system(size: 10, weight: .bold))
+                    .padding(.horizontal, 5)
+                    .background(red.opacity(0.8))
+                    .cornerRadius(4)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "bolt.fill")
+                            .foregroundColor(.cyan)
+                        Text("Năng Lượng 100/100")
+                            .foregroundColor(.white)
+                    }
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 5)
+                    .background(Color.blue.opacity(0.8))
+                    .cornerRadius(4)
+                }
             }
+            .padding(5)
+            .background(Color.black.opacity(0.72))
+            .cornerRadius(10)
+
+            Spacer(minLength: 2)
+
+            currencyBox(icon: "bitcoinsign.circle.fill",
+                        value: "2.000.000")
+
+            currencyBox(icon: "diamond.fill",
+                        value: "999.999")
+
+            Spacer(minLength: 2)
+
+            topMenuButton("Cửa Hàng", icon: "cart.fill")
+            topMenuButton("Băng Hội", icon: "person.3.fill")
+            topMenuButton("Xếp Hạng", icon: "trophy.fill")
+            topMenuButton("Cài Đặt", icon: "gearshape.fill")
+            topMenuButton("Thoát Game", icon: "door.right.hand.open")
+        }
+    }
+
+    private func currencyBox(icon: String, value: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .foregroundColor(gold)
+                .font(.system(size: 17))
+
+            Text(value)
+                .font(.system(size: 11, weight: .heavy))
+                .foregroundColor(.white)
+
+            Image(systemName: "plus.circle.fill")
+                .foregroundColor(gold)
+        }
+        .padding(7)
+        .background(Color.black.opacity(0.75))
+        .cornerRadius(8)
+    }
+
+    private func topMenuButton(_ title: String, icon: String) -> some View {
+        Button {
+            activePanel = title
+        } label: {
+            VStack(spacing: 3) {
+                Image(systemName: icon)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(gold)
+
+                Text(title)
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundColor(.white)
+            }
+            .frame(minWidth: 43)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - LEFT MENU
+
+    private var leftMenu: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            sideMenuButton("Nhiệm Vụ", icon: "scroll.fill")
+            sideMenuButton("Quà Đăng Nhập", icon: "gift.fill")
+            sideMenuButton("Sự Kiện", icon: "trophy.fill")
+        }
+        .padding(8)
+        .background(Color.black.opacity(0.22))
+        .cornerRadius(12)
+    }
+
+    private func sideMenuButton(_ title: String, icon: String) -> some View {
+        Button {
+            activePanel = title
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundColor(gold)
+
+                Text(title)
+                    .font(.system(size: 10, weight: .heavy))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(width: 75)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - RIGHT INFORMATION
+
+    private var rightInformation: some View {
+        VStack(alignment: .trailing, spacing: 9) {
+            // Minimap
+            Button {
+                activePanel = "Bản Đồ"
+            } label: {
+                VStack(spacing: 0) {
+                    minimap
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "mappin.and.ellipse")
+                            .foregroundColor(.yellow)
+
+                        Text("Trung Tâm Thành Phố")
+                            .foregroundColor(.white)
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(6)
+                    .background(Color.black.opacity(0.85))
+                }
+                .frame(width: 150)
+                .background(Color.black.opacity(0.85))
+                .cornerRadius(10)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(gold, lineWidth: 2)
+                }
+            }
+            .buttonStyle(.plain)
+
+            // Nhiệm vụ chính
+            Button {
+                activePanel = "Nhiệm Vụ"
+            } label: {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Nhiệm Vụ Chính")
+                        .foregroundColor(gold)
+                        .font(.system(size: 13, weight: .heavy))
+
+                    Text("› Đánh bại 10 tên côn đồ")
+                        .foregroundColor(.white)
+                        .font(.system(size: 10, weight: .bold))
+
+                    Text("(0/10)                         ›")
+                        .foregroundColor(.white)
+                        .font(.system(size: 10, weight: .bold))
+                }
+                .padding(9)
+                .frame(width: 190, alignment: .leading)
+                .background(Color.black.opacity(0.78))
+                .cornerRadius(9)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 9)
+                        .stroke(gold, lineWidth: 1)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private var minimap: some View {
+        GeometryReader { geo in
+            ZStack {
+                Color(red: 0.13, green: 0.19, blue: 0.15)
+
+                // Đường phố trên minimap
+                ForEach(0..<5, id: \.self) { i in
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.8))
+                        .frame(height: 7)
+                        .offset(y: CGFloat(i - 2) * 25)
+
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.8))
+                        .frame(width: 7)
+                        .offset(x: CGFloat(i - 2) * 30)
+                }
+
+                ForEach(0..<12, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(i % 2 == 0 ? Color.green : Color.orange)
+                        .frame(width: 13, height: 10)
+                        .offset(
+                            x: CGFloat((i % 4) - 2) * 29,
+                            y: CGFloat((i / 4) - 1) * 27
+                        )
+                }
+
+                Image(systemName: "location.north.fill")
+                    .font(.system(size: 25))
+                    .foregroundColor(.cyan)
+                    .shadow(color: .black, radius: 3)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
+        }
+        .frame(height: 105)
+    }
+
+    // MARK: - BOTTOM HUD
+
+    private var bottomHUD: some View {
+        HStack(alignment: .bottom) {
+            // Chat thế giới
+            Button {
+                showChat.toggle()
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "message.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white)
+
+                    Text("Thế Giới  |  AnhEm: Kết bang nào?")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(gold)
+
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white)
+                }
+                .padding(9)
+                .background(Color.black.opacity(0.78))
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
 
             Spacer()
 
-            VStack(alignment: .trailing) {
-                Text("TIỀN: 0")
-                Text("VÀNG: 0")
-            }
-            .font(.caption.bold())
-            .foregroundColor(.yellow)
-        }
-        .padding(12)
-        .background(.black.opacity(0.65))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    private var controls: some View {
-        HStack(alignment: .bottom) {
+            // Joystick
             JoystickView(movement: $movement)
                 .frame(width: 125, height: 125)
 
             Spacer()
 
-            VStack(spacing: 12) {
+            // Ba lô
+            Button {
+                activePanel = "Ba Lô"
+            } label: {
+                VStack(spacing: 4) {
+                    Image(systemName: "backpack.fill")
+                        .font(.system(size: 29))
+                        .foregroundColor(gold)
+
+                    Text("Ba Lô")
+                        .font(.system(size: 10, weight: .heavy))
+                        .foregroundColor(.white)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            // Điều khiển chiến đấu
+            VStack(spacing: 10) {
                 HStack(spacing: 12) {
-                    circleButton(
-                        "NGỒI",
-                        icon: "arrow.down",
-                        color: crouching ? .green : .orange
-                    ) {
-                        crouching.toggle()
+                    actionButton("CAMERA", icon: "camera.fill",
+                                 color: .gray, size: 57) {
+                        activePanel = "Camera"
                     }
 
-                    circleButton(
-                        "NHẢY",
-                        icon: "arrow.up",
-                        color: .blue
-                    ) {
+                    actionButton("NHẢY", icon: "figure.run",
+                                 color: .orange, size: 65) {
                         jumpCount += 1
                     }
                 }
 
-                circleButton(
-                    "TẤN CÔNG",
-                    icon: "hand.raised.fill",
-                    color: .red,
-                    size: 82
-                ) {
-                    attackCount += 1
+                HStack(spacing: 12) {
+                    actionButton("NGỒI", icon: "figure.sitting",
+                                 color: .gray, size: 65) {
+                        crouching.toggle()
+                    }
+
+                    actionButton("TẤN CÔNG", icon: "hand.raised.fill",
+                                 color: red, size: 88) {
+                        attackCount += 1
+                    }
                 }
             }
         }
     }
 
-    private func circleButton(
+    private func actionButton(
         _ title: String,
         icon: String,
         color: Color,
-        size: CGFloat = 64,
+        size: CGFloat,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 3) {
                 Image(systemName: icon)
-                    .font(.system(size: 21, weight: .bold))
+                    .font(.system(size: size * 0.34, weight: .heavy))
 
                 Text(title)
                     .font(.system(size: 9, weight: .heavy))
             }
             .foregroundColor(.white)
             .frame(width: size, height: size)
-            .background(color)
+            .background(color.opacity(0.88))
             .clipShape(Circle())
             .overlay {
-                Circle().stroke(.white.opacity(0.8), lineWidth: 2)
+                Circle().stroke(.white.opacity(0.85), lineWidth: 2)
             }
+            .shadow(color: color.opacity(0.5), radius: 5)
         }
         .buttonStyle(.plain)
     }
-}
 
-struct JoystickView: View {
-    @Binding var movement: CGSize
+    // MARK: - MENU PANEL
 
-    var body: some View {
-        GeometryReader { geo in
-            let limit = min(geo.size.width, geo.size.height) / 2 - 27
+    private func menuPanel(_ title: String) -> some View {
+        ZStack {
+            Color.black.opacity(0.65)
+                .ignoresSafeArea()
 
-            ZStack {
-                Circle()
-                    .fill(.black.opacity(0.55))
-                    .overlay {
-                        Circle().stroke(.white.opacity(0.65), lineWidth: 2)
+            VStack(spacing: 15) {
+                HStack {
+                    Text(title.uppercased())
+                        .font(.system(size: 21, weight: .heavy))
+                        .foregroundColor(gold)
+
+                    Spacer()
+
+                    Button {
+                        activePanel = nil
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 27))
+                            .foregroundColor(.red)
                     }
+                }
 
-                Circle()
-                    .fill(.red)
-                    .frame(width: 52, height: 52)
-                    .overlay {
-                        Circle().stroke(.white, lineWidth: 2)
-                    }
-                    .offset(movement)
+                Divider().background(gold)
+
+                Text(panelDescription(title))
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+
+                Spacer()
             }
-            .contentShape(Circle())
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        let x = value.translation.width
-                        let y = value.translation.height
-                        let distance = sqrt(x * x + y * y)
+            .padding(22)
+            .frame(width: 340, height: 220)
+            .background(Color(red: 0.09, green: 0.07, blue: 0.08))
+            .cornerRadius(16)
+            .overlay {
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(gold, lineWidth: 2)
+            }
+        }
+    }
 
-                        if distance > limit {
-                            let ratio = limit / distance
-                            movement = CGSize(
-                                width: x * ratio,
-                                height: y * ratio
-                            )
-                        } else {
-                            movement = CGSize(width: x, height: y)
-                        }
-                    }
-                    .onEnded { _ in
-                        movement = .zero
-                    }
-            )
+    private func panelDescription(_ title: String) -> String {
+        switch title {
+        case "Cửa Hàng":
+            return "Cửa hàng vật phẩm và trang phục sẽ được kết nối tại đây."
+        case "Băng Hội":
+            return "Thông tin băng hội, thành viên và lãnh thổ."
+        case "Xếp Hạng":
+            return "Bảng xếp hạng chiến binh đường phố."
+        case "Cài Đặt":
+            return "Cài đặt âm thanh, camera và điều khiển."
+        case "Nhiệm Vụ":
+            return "Nhiệm vụ chính và nhiệm vụ hằng ngày."
+        case "Quà Đăng Nhập":
+            return "Phần thưởng đăng nhập 7 ngày."
+        case "Sự Kiện":
+            return "Các sự kiện trong thành phố."
+        case "Bản Đồ":
+            return "Bản đồ 6 khu vực của thành phố."
+        case "Ba Lô":
+            return "Vật phẩm, trang phục và vũ khí của nhân vật."
+        case "Camera":
+            return "Vuốt nửa phải màn hình để xoay camera 360 độ."
+        default:
+            return "Chức năng đang được phát triển."
         }
     }
 }
+
 
 struct GameSceneView: UIViewRepresentable {
     var movement: CGSize
