@@ -1345,3 +1345,52 @@ func attack() {
 }
 
 }
+
+struct JoystickView: View {
+    @Binding var movement: CGSize
+
+    var body: some View {
+        GeometryReader { geo in
+            let limit = min(geo.size.width, geo.size.height) / 2 - 27
+
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.65))
+                    .overlay {
+                        Circle()
+                            .stroke(Color.white.opacity(0.7), lineWidth: 2)
+                    }
+
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 52, height: 52)
+                    .overlay {
+                        Circle().stroke(Color.white, lineWidth: 2)
+                    }
+                    .offset(movement)
+            }
+            .contentShape(Circle())
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        let x = value.translation.width
+                        let y = value.translation.height
+                        let distance = sqrt(x * x + y * y)
+
+                        if distance > limit {
+                            let ratio = limit / distance
+                            movement = CGSize(
+                                width: x * ratio,
+                                height: y * ratio
+                            )
+                        } else {
+                            movement = CGSize(width: x, height: y)
+                        }
+                    }
+                    .onEnded { _ in
+                        movement = .zero
+                    }
+            )
+        }
+    }
+}
