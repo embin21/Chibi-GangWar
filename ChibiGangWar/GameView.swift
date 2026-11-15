@@ -430,18 +430,120 @@ for crossing in [30, 90, 150] {
     }
 
     // MARK: - Vỉa hè hai bên
-    for side: Float in [-1, 1] {
-        let sidewalk = SCNBox(
-            width: 4,
-            height: 0.3,
-            length: 240,
-            chamferRadius: 0
-        )
-        sidewalk.firstMaterial = sidewalkMat
+    
+// MARK: - Vỉa hè hai bên thành phố
 
-        let sidewalkNode = SCNNode(geometry: sidewalk)
-        sidewalkNode.position = SCNVector3(side * 11, 0, -100)
-        root.addChildNode(sidewalkNode)
+let sidewalkMaterial = mat(
+    UIColor(red: 0.32, green: 0.32, blue: 0.34, alpha: 1)
+)
+
+let curbMaterial = mat(
+    UIColor(red: 0.65, green: 0.65, blue: 0.67, alpha: 1)
+)
+
+let tileMaterial = mat(
+    UIColor(red: 0.42, green: 0.42, blue: 0.44, alpha: 1)
+)
+
+let grassMaterial = mat(
+    UIColor(red: 0.08, green: 0.28, blue: 0.12, alpha: 1)
+)
+
+// Vỉa hè và bó vỉa
+for side: Float in [-1, 1] {
+
+    let sidewalk = SCNBox(
+        width: 4,
+        height: 0.3,
+        length: 240,
+        chamferRadius: 0
+    )
+    sidewalk.firstMaterial = sidewalkMaterial
+
+    let sidewalkNode = SCNNode(geometry: sidewalk)
+    sidewalkNode.position = SCNVector3(side * 11, 0, -100)
+    root.addChildNode(sidewalkNode)
+
+    let curb = SCNBox(
+        width: 0.25,
+        height: 0.4,
+        length: 240,
+        chamferRadius: 0
+    )
+    curb.firstMaterial = curbMaterial
+
+    let curbNode = SCNNode(geometry: curb)
+    curbNode.position = SCNVector3(side * 9, 0.02, -100)
+    root.addChildNode(curbNode)
+
+    // Gạch lát vỉa hè
+    for index in 0..<60 {
+        let tile = SCNBox(
+            width: 3.7,
+            height: 0.025,
+            length: 3.8,
+            chamferRadius: 0.02
+        )
+        tile.firstMaterial = tileMaterial
+
+        let tileNode = SCNNode(geometry: tile)
+        tileNode.position = SCNVector3(
+            side * 11,
+            0.17,
+            Float(-index * 4)
+        )
+        root.addChildNode(tileNode)
+    }
+
+    // Bồn cây và cây xanh
+    for index in 0..<12 {
+        let z = Float(-index * 18 - 5)
+
+        let planter = SCNBox(
+            width: 1.8,
+            height: 0.55,
+            length: 1.8,
+            chamferRadius: 0.12
+        )
+        planter.firstMaterial = mat(.darkGray)
+
+        let planterNode = SCNNode(geometry: planter)
+        planterNode.position = SCNVector3(side * 12, 0.4, z)
+        root.addChildNode(planterNode)
+
+        let trunk = SCNCylinder(radius: 0.13, height: 2.2)
+        trunk.firstMaterial = mat(
+            UIColor(red: 0.3, green: 0.17, blue: 0.08, alpha: 1)
+        )
+
+        let trunkNode = SCNNode(geometry: trunk)
+        trunkNode.position = SCNVector3(side * 12, 1.75, z)
+        root.addChildNode(trunkNode)
+
+        let leaves = SCNSphere(radius: 0.9)
+        leaves.firstMaterial = grassMaterial
+
+        let leavesNode = SCNNode(geometry: leaves)
+        leavesNode.scale = SCNVector3(1, 1.3, 1)
+        leavesNode.position = SCNVector3(side * 12, 3.1, z)
+        root.addChildNode(leavesNode)
+    }
+
+    // Thùng rác công cộng
+    for index in 0..<8 {
+        let bin = SCNCylinder(radius: 0.32, height: 0.85)
+        bin.firstMaterial = mat(.darkGray)
+
+        let binNode = SCNNode(geometry: bin)
+        binNode.position = SCNVector3(
+            side * 10.5,
+            0.65,
+            Float(-index * 28 - 12)
+        )
+        root.addChildNode(binNode)
+    }
+}
+
 
         // MARK: - Dãy nhà
         for index in 0..<18 {
