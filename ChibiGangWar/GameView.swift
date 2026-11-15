@@ -1211,7 +1211,7 @@ final class GameCoordinator: NSObject, SCNSceneRendererDelegate {
         lastTime = time
 
         // Camera xoay độc lập
-        camera.eulerAngles.y = cameraYaw
+        
 
         let inputX = Float(movement.width / 45)
         let inputY = -Float(movement.height / 45)
@@ -1259,12 +1259,13 @@ if let body = body {
         player.position.z += moveZ * speed * delta
 
         if abs(moveX) > 0.05 || abs(moveZ) > 0.05 {
-            player.eulerAngles.y = atan2(-moveX, -moveZ)
-        }
+    player.eulerAngles.y = atan2(-moveX, -moveZ)
+}
 
-        if let body = body {
-            body.scale.y = crouching ? 0.65 : 1
-        }
+// Đồng bộ hướng camera
+camera.eulerAngles.y = cameraYaw - player.eulerAngles.y
+
+        
 
         if jumpTime > 0 {
             jumpTime -= delta
@@ -1329,6 +1330,7 @@ func attack() {
     )
 }
 
+}
 }
 
 struct JoystickView: View {
