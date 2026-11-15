@@ -327,12 +327,92 @@ private func createCity(_ scene: SCNScene) {
     let roadMat = mat(UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1))
 
     // MARK: - Đường chính
-    let road = SCNBox(
-        width: 18,
-        height: 0.12,
+    
+// MARK: - Đường phố 3D
+let road = SCNBox(
+    width: 18,
+    height: 0.12,
+    length: 240,
+    chamferRadius: 0
+)
+road.firstMaterial = roadMat
+
+let roadNode = SCNNode(geometry: road)
+roadNode.position = SCNVector3(0, -0.12, -100)
+root.addChildNode(roadNode)
+
+// Vạch vàng phân chia hai chiều
+for side: Float in [-1, 1] {
+    let line = SCNBox(
+        width: 0.12,
+        height: 0.025,
         length: 240,
         chamferRadius: 0
     )
+    line.firstMaterial = mat(.yellow)
+
+    let node = SCNNode(geometry: line)
+    node.position = SCNVector3(side * 0.12, -0.045, -100)
+    root.addChildNode(node)
+}
+
+// Vạch trắng phân làn đứt đoạn
+for lane: Float in [-1, 1] {
+    for index in 0..<30 {
+        let dash = SCNBox(
+            width: 0.12,
+            height: 0.025,
+            length: 3,
+            chamferRadius: 0
+        )
+        dash.firstMaterial = mat(.white)
+
+        let node = SCNNode(geometry: dash)
+        node.position = SCNVector3(
+            lane * 4.5,
+            -0.045,
+            Float(-index * 8)
+        )
+        root.addChildNode(node)
+    }
+}
+
+// Vạch trắng sát mép đường
+for side: Float in [-1, 1] {
+    let edge = SCNBox(
+        width: 0.15,
+        height: 0.025,
+        length: 240,
+        chamferRadius: 0
+    )
+    edge.firstMaterial = mat(.white)
+
+    let node = SCNNode(geometry: edge)
+    node.position = SCNVector3(side * 8.5, -0.045, -100)
+    root.addChildNode(node)
+}
+
+// Vạch qua đường ở một số vị trí
+for crossing in [30, 90, 150] {
+    for index in 0..<9 {
+        let stripe = SCNBox(
+            width: 1.5,
+            height: 0.03,
+            length: 0.45,
+            chamferRadius: 0
+        )
+        stripe.firstMaterial = mat(.white)
+
+        let node = SCNNode(geometry: stripe)
+        node.position = SCNVector3(
+            -6.8 + Float(index) * 1.7,
+            -0.035,
+            Float(-crossing)
+        )
+        root.addChildNode(node)
+    }
+}
+
     road.firstMaterial = roadMat
 
     let roadNode = SCNNode(geometry: road)
