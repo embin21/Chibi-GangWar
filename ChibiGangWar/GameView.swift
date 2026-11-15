@@ -370,66 +370,161 @@ struct GameSceneView: UIViewRepresentable {
         }
     }
 
-    private func createPlayer() -> SCNNode {
-        let player = SCNNode()
-        player.name = "player"
+    
+private func createPlayer() -> SCNNode {
+    let player = SCNNode()
+    player.name = "player"
 
-        // Thân áo
-        let body = SCNBox(
-            width: 0.85,
-            height: 0.95,
-            length: 0.45,
-            chamferRadius: 0.12
-        )
-        body.firstMaterial?.diffuse.contents = UIColor.black
-
-        let bodyNode = SCNNode(geometry: body)
-        bodyNode.name = "body"
-        bodyNode.position.y = 1.05
-        player.addChildNode(bodyNode)
-
-        // Đầu
-        let head = SCNSphere(radius: 0.48)
-        head.firstMaterial?.diffuse.contents = UIColor(
-            red: 1, green: 0.78, blue: 0.62, alpha: 1
-        )
-
-        let headNode = SCNNode(geometry: head)
-        headNode.position.y = 1.85
-        player.addChildNode(headNode)
-
-        // Tóc
-        let hair = SCNSphere(radius: 0.49)
-        hair.firstMaterial?.diffuse.contents = UIColor.white
-
-        let hairNode = SCNNode(geometry: hair)
-        hairNode.scale = SCNVector3(1, 0.55, 1)
-        hairNode.position.y = 2.15
-        player.addChildNode(hairNode)
-
-        // Hai chân
-        for x: Float in [-0.23, 0.23] {
-            let leg = SCNCapsule(capRadius: 0.13, height: 0.75)
-            leg.firstMaterial?.diffuse.contents = UIColor.darkGray
-
-            let node = SCNNode(geometry: leg)
-            node.position = SCNVector3(x, 0.38, 0)
-            player.addChildNode(node)
-        }
-
-        // Hai tay
-        for x: Float in [-0.55, 0.55] {
-            let arm = SCNCapsule(capRadius: 0.12, height: 0.75)
-            arm.firstMaterial?.diffuse.contents = UIColor.black
-
-            let node = SCNNode(geometry: arm)
-            node.position = SCNVector3(x, 1.05, 0)
-            node.eulerAngles.z = x < 0 ? -0.2 : 0.2
-            player.addChildNode(node)
-        }
-
-        return player
+    // MARK: - Vật liệu
+    func material(_ color: UIColor, roughness: CGFloat = 0.8) -> SCNMaterial {
+        let m = SCNMaterial()
+        m.diffuse.contents = color
+        m.roughness.contents = roughness
+        return m
     }
+
+    let black = material(.black)
+    let red = material(UIColor(red: 0.8, green: 0.02, blue: 0.06, alpha: 1))
+    let white = material(.white)
+    let skin = material(UIColor(red: 1, green: 0.72, blue: 0.55, alpha: 1))
+    let pantsMat = material(UIColor(red: 0.12, green: 0.12, blue: 0.16, alpha: 1))
+    let shoeMat = material(UIColor(red: 0.08, green: 0.08, blue: 0.09, alpha: 1))
+
+    // MARK: - Thân áo hoodie
+    let torso = SCNBox(
+        width: 0.88,
+        height: 0.95,
+        length: 0.48,
+        chamferRadius: 0.16
+    )
+    torso.materials = [black, black, black, black, black, black]
+
+    let bodyNode = SCNNode(geometry: torso)
+    bodyNode.name = "body"
+    bodyNode.position = SCNVector3(0, 1.12, 0)
+    player.addChildNode(bodyNode)
+
+    // Áo đỏ bên trong
+    let shirt = SCNBox(width: 0.42, height: 0.7, length: 0.025, chamferRadius: 0.04)
+    shirt.firstMaterial = red
+
+    let shirtNode = SCNNode(geometry: shirt)
+    shirtNode.position = SCNVector3(0, 1.12, -0.25)
+    player.addChildNode(shirtNode)
+
+    // Logo trước ngực
+    let logo = SCNBox(width: 0.22, height: 0.12, length: 0.025, chamferRadius: 0.025)
+    logo.firstMaterial = red
+
+    let logoNode = SCNNode(geometry: logo)
+    logoNode.position = SCNVector3(0.2, 1.35, -0.26)
+    player.addChildNode(logoNode)
+
+    // MARK: - Đầu
+    let head = SCNSphere(radius: 0.48)
+    head.firstMaterial = skin
+
+    let headNode = SCNNode(geometry: head)
+    headNode.scale = SCNVector3(1, 1.05, 0.9)
+    headNode.position = SCNVector3(0, 1.95, 0)
+    player.addChildNode(headNode)
+
+    // MARK: - Tóc trắng
+    let hair = SCNSphere(radius: 0.49)
+    hair.firstMaterial = white
+
+    let hairNode = SCNNode(geometry: hair)
+    hairNode.scale = SCNVector3(1.05, 0.55, 1)
+    hairNode.position = SCNVector3(0, 2.25, 0.02)
+    player.addChildNode(hairNode)
+
+    // Tóc mái
+    for i in -2...2 {
+        let spike = SCNCone(topRadius: 0.015, bottomRadius: 0.13, height: 0.32)
+        spike.firstMaterial = white
+
+        let node = SCNNode(geometry: spike)
+        node.position = SCNVector3(Float(i) * 0.15, 2.12, -0.34)
+        node.eulerAngles.x = -0.55
+        player.addChildNode(node)
+    }
+
+    // MARK: - Khuôn mặt
+    for x: Float in [-0.17, 0.17] {
+        let eye = SCNSphere(radius: 0.055)
+        eye.firstMaterial = black
+
+        let eyeNode = SCNNode(geometry: eye)
+        eyeNode.scale = SCNVector3(1, 1.2, 0.5)
+        eyeNode.position = SCNVector3(x, 1.98, -0.415)
+        player.addChildNode(eyeNode)
+    }
+
+    // Khẩu trang đỏ
+    let mask = SCNBox(width: 0.48, height: 0.2, length: 0.055, chamferRadius: 0.06)
+    mask.firstMaterial = red
+
+    let maskNode = SCNNode(geometry: mask)
+    maskNode.position = SCNVector3(0, 1.79, -0.42)
+    player.addChildNode(maskNode)
+
+    // MARK: - Hai chân quần
+    for x: Float in [-0.23, 0.23] {
+        let leg = SCNCapsule(capRadius: 0.16, height: 0.85)
+        leg.firstMaterial = pantsMat
+
+        let legNode = SCNNode(geometry: leg)
+        legNode.name = x < 0 ? "leftLeg" : "rightLeg"
+        legNode.position = SCNVector3(x, 0.48, 0)
+        player.addChildNode(legNode)
+
+        // Giày
+        let shoe = SCNBox(width: 0.3, height: 0.19, length: 0.48, chamferRadius: 0.07)
+        shoe.firstMaterial = shoeMat
+
+        let shoeNode = SCNNode(geometry: shoe)
+        shoeNode.position = SCNVector3(x, 0.1, -0.1)
+        player.addChildNode(shoeNode)
+
+        // Đế giày đỏ
+        let sole = SCNBox(width: 0.31, height: 0.045, length: 0.49, chamferRadius: 0.02)
+        sole.firstMaterial = red
+
+        let soleNode = SCNNode(geometry: sole)
+        soleNode.position = SCNVector3(x, 0.025, -0.1)
+        player.addChildNode(soleNode)
+    }
+
+    // MARK: - Hai tay áo
+    for x: Float in [-0.57, 0.57] {
+        let arm = SCNCapsule(capRadius: 0.14, height: 0.76)
+        arm.firstMaterial = black
+
+        let armNode = SCNNode(geometry: arm)
+        armNode.name = x < 0 ? "leftArm" : "rightArm"
+        armNode.position = SCNVector3(x, 1.12, 0)
+        armNode.eulerAngles.z = x < 0 ? -0.18 : 0.18
+        player.addChildNode(armNode)
+
+        // Bàn tay
+        let hand = SCNSphere(radius: 0.14)
+        hand.firstMaterial = skin
+
+        let handNode = SCNNode(geometry: hand)
+        handNode.position = SCNVector3(x, 0.7, -0.02)
+        player.addChildNode(handNode)
+
+        // Viền tay áo đỏ
+        let cuff = SCNTorus(ringRadius: 0.13, pipeRadius: 0.035)
+        cuff.firstMaterial = red
+
+        let cuffNode = SCNNode(geometry: cuff)
+        cuffNode.position = SCNVector3(x, 0.78, 0)
+        cuffNode.eulerAngles.x = .pi / 2
+        player.addChildNode(cuffNode)
+    }
+
+    return player
 }
 
 final class GameCoordinator: NSObject, SCNSceneRendererDelegate {
