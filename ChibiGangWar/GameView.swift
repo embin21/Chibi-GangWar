@@ -626,15 +626,51 @@ if let body = body {
         jumpTime = 0.8
     }
 
-    func attack() {
-        guard let body = body else { return }
+    
+func attack() {
+    guard let body = body,
+          let player = player else { return }
 
-        body.removeAllActions()
-        body.runAction(
-            SCNAction.sequence([
-                SCNAction.scale(to: 1.15, duration: 0.08),
-                SCNAction.scale(to: 1.0, duration: 0.12)
-            ])
-        )
-    }
+    body.removeAllActions()
+
+    let rightArm = player.childNode(
+        withName: "rightArm",
+        recursively: false
+    )
+
+    guard let arm = rightArm else { return }
+
+    arm.removeAllActions()
+
+    let windUp = SCNAction.rotateTo(
+        x: 0.65, y: 0, z: 0.15,
+        duration: 0.10
+    )
+
+    let punch = SCNAction.rotateTo(
+        x: -1.35, y: 0, z: -0.1,
+        duration: 0.09
+    )
+
+    let recover = SCNAction.rotateTo(
+        x: 0, y: 0, z: 0,
+        duration: 0.18
+    )
+
+    arm.runAction(
+        SCNAction.sequence([
+            windUp,
+            punch,
+            recover
+        ])
+    )
+
+    body.runAction(
+        SCNAction.sequence([
+            SCNAction.scale(to: 1.08, duration: 0.08),
+            SCNAction.scale(to: 1.0, duration: 0.12)
+        ])
+    )
+}
+
 }
