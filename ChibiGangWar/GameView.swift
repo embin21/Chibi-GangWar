@@ -871,7 +871,7 @@ for side: Float in [-1, 1] {
             )
             building.firstMaterial = index % 2 == 0 ? concrete : darkRed
 
-            let centerX = Float(side) * 17
+            let centerX: Float = index % 2 == 0 ? -17 : 17
             let centerZ = Float(-index * 12)
 
             let buildingNode = SCNNode(geometry: building)
