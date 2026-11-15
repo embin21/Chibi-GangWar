@@ -1003,7 +1003,7 @@ for side: Float in [-1, 1] {
             )
             root.addChildNode(awningNode)
         }
-    }
+    
 
     // MARK: - Cột đèn đường
     for index in 0..<16 {
