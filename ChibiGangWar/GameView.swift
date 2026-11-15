@@ -302,73 +302,250 @@ struct GameSceneView: UIViewRepresentable {
         scene.rootNode.addChildNode(roadNode)
     }
 
-    private func createCity(_ scene: SCNScene) {
-        for side in [-1, 1] {
-            for index in 0..<18 {
-                let height = CGFloat(arc4random_uniform(12) + 5)
+    
+private func createCity(_ scene: SCNScene) {
 
-                let building = SCNBox(
-                    width: 5,
-                    height: height,
-                    length: 6,
-                    chamferRadius: 0.15
-                )
+    let root = scene.rootNode
 
-                building.firstMaterial?.diffuse.contents =
-                    index % 2 == 0
-                    ? UIColor.darkGray
-                    : UIColor(
-                        red: 0.22, green: 0.12, blue: 0.16, alpha: 1
+    // MARK: - Vật liệu
+    func mat(_ color: UIColor, glow: Bool = false) -> SCNMaterial {
+        let m = SCNMaterial()
+        m.diffuse.contents = color
+        if glow {
+            m.emission.contents = color
+        }
+        return m
+    }
+
+    let concrete = mat(UIColor(red: 0.16, green: 0.17, blue: 0.20, alpha: 1))
+    let darkRed = mat(UIColor(red: 0.24, green: 0.035, blue: 0.06, alpha: 1))
+    let glass = mat(UIColor(red: 0.08, green: 0.16, blue: 0.22, alpha: 1))
+    let windowLight = mat(UIColor(red: 1, green: 0.65, blue: 0.2, alpha: 1), glow: true)
+    let neonRed = mat(.red, glow: true)
+    let neonBlue = mat(.cyan, glow: true)
+    let sidewalkMat = mat(UIColor(red: 0.28, green: 0.28, blue: 0.30, alpha: 1))
+    let roadMat = mat(UIColor(red: 0.07, green: 0.07, blue: 0.08, alpha: 1))
+
+    // MARK: - Đường chính
+    let road = SCNBox(
+        width: 18,
+        height: 0.12,
+        length: 240,
+        chamferRadius: 0
+    )
+    road.firstMaterial = roadMat
+
+    let roadNode = SCNNode(geometry: road)
+    roadNode.position = SCNVector3(0, -0.12, -100)
+    root.addChildNode(roadNode)
+
+    // Vạch đường
+    for i in 0..<30 {
+        let line = SCNBox(width: 0.18, height: 0.015, length: 3, chamferRadius: 0)
+        line.firstMaterial = mat(.yellow)
+
+        let lineNode = SCNNode(geometry: line)
+        lineNode.position = SCNVector3(0, -0.045, Float(-i * 8))
+        root.addChildNode(lineNode)
+    }
+
+    // MARK: - Vỉa hè hai bên
+    for side: Float in [-1, 1] {
+        let sidewalk = SCNBox(
+            width: 4,
+            height: 0.3,
+            length: 240,
+            chamferRadius: 0
+        )
+        sidewalk.firstMaterial = sidewalkMat
+
+        let sidewalkNode = SCNNode(geometry: sidewalk)
+        sidewalkNode.position = SCNVector3(side * 11, 0, -100)
+        root.addChildNode(sidewalkNode)
+
+        // MARK: - Dãy nhà
+        for index in 0..<18 {
+
+            let height = CGFloat(arc4random_uniform(12) + 10)
+            let width: CGFloat = CGFloat(arc4random_uniform(3) + 7)
+
+            let building = SCNBox(
+                width: width,
+                height: height,
+                length: 8,
+                chamferRadius: 0.12
+            )
+            building.firstMaterial = index % 2 == 0 ? concrete : darkRed
+
+            let centerX = side * 17
+            let centerZ = Float(-index * 12)
+
+            let buildingNode = SCNNode(geometry: building)
+            buildingNode.position = SCNVector3(
+                centerX,
+                Float(height / 2),
+                centerZ
+            )
+            root.addChildNode(buildingNode)
+
+            // Mái nhà
+            let roof = SCNBox(
+                width: width + 0.4,
+                height: 0.35,
+                length: 8.4,
+                chamferRadius: 0.05
+            )
+            roof.firstMaterial = darkRed
+
+            let roofNode = SCNNode(geometry: roof)
+            roofNode.position = SCNVector3(
+                centerX,
+                Float(height) + 0.15,
+                centerZ
+            )
+            root.addChildNode(roofNode)
+
+            // Cửa sổ theo từng tầng
+            let floors = max(2, Int(height / 3))
+
+            for floor in 0..<floors {
+                for windowIndex in 0..<2 {
+
+                    let window = SCNBox(
+                        width: 1.25,
+                        height: 1.5,
+                        length: 0.12,
+                        chamferRadius: 0.04
                     )
 
-                let node = SCNNode(geometry: building)
-                node.position = SCNVector3(
-                    Float(side * 12),
-                    Float(height / 2),
-                    Float(-index * 11)
-                )
-                scene.rootNode.addChildNode(node)
+                    window.firstMaterial = arc4random_uniform(3) == 0
+                        ? glass
+                        : windowLight
 
-                // Biển hiệu phát sáng
-                let sign = SCNBox(
-                    width: 2.5,
-                    height: 0.6,
-                    length: 0.12,
+                    let windowNode = SCNNode(geometry: window)
+
+                    let windowX = centerX + Float(windowIndex) * 2 - 1
+                    let windowY = Float(floor) * 2.7 + 2.1
+                    let windowZ = centerZ - 4.08
+
+                    windowNode.position = SCNVector3(
+                        windowX,
+                        windowY,
+                        windowZ
+                    )
+                    root.addChildNode(windowNode)
+                }
+            }
+
+            // Ban công tầng trên
+            if height > 13 {
+                let balcony = SCNBox(
+                    width: 3.8,
+                    height: 0.18,
+                    length: 0.9,
+                    chamferRadius: 0.04
+                )
+                balcony.firstMaterial = darkRed
+
+                let balconyNode = SCNNode(geometry: balcony)
+                balconyNode.position = SCNVector3(
+                    centerX,
+                    4.0,
+                    centerZ - 4.5
+                )
+                root.addChildNode(balconyNode)
+
+                // Lan can
+                let rail = SCNBox(
+                    width: 3.8,
+                    height: 0.65,
+                    length: 0.08,
                     chamferRadius: 0
                 )
-                sign.firstMaterial?.diffuse.contents = UIColor.red
-                sign.firstMaterial?.emission.contents = UIColor.red
+                rail.firstMaterial = mat(.gray)
 
-                let signNode = SCNNode(geometry: sign)
-                signNode.position = SCNVector3(
-                    Float(side) * 9.35,
-                    Float(height * 0.7),
-                    Float(-index * 11)
+                let railNode = SCNNode(geometry: rail)
+                railNode.position = SCNVector3(
+                    centerX,
+                    4.4,
+                    centerZ - 4.9
                 )
-                scene.rootNode.addChildNode(signNode)
+                root.addChildNode(railNode)
             }
-        }
 
-        // Cột đèn đường
-        for index in 0..<12 {
-            let pole = SCNCylinder(radius: 0.08, height: 5)
-            pole.firstMaterial?.diffuse.contents = UIColor.gray
-
-            let node = SCNNode(geometry: pole)
-            node.position = SCNVector3(
-                8, 2.5, Float(-index * 15)
+            // Cửa chính
+            let door = SCNBox(
+                width: 1.8,
+                height: 2.8,
+                length: 0.15,
+                chamferRadius: 0.04
             )
-            scene.rootNode.addChildNode(node)
+            door.firstMaterial = mat(.black)
 
-            let lamp = SCNSphere(radius: 0.22)
-            lamp.firstMaterial?.diffuse.contents = UIColor.orange
-            lamp.firstMaterial?.emission.contents = UIColor.orange
+            let doorNode = SCNNode(geometry: door)
+            doorNode.position = SCNVector3(
+                centerX,
+                1.4,
+                centerZ - 4.1
+            )
+            root.addChildNode(doorNode)
 
-            let lampNode = SCNNode(geometry: lamp)
-            lampNode.position = SCNVector3(8, 5, Float(-index * 15))
-            scene.rootNode.addChildNode(lampNode)
+            // Bảng hiệu neon
+            let sign = SCNBox(
+                width: 3.8,
+                height: 0.8,
+                length: 0.18,
+                chamferRadius: 0.05
+            )
+            sign.firstMaterial = index % 2 == 0 ? neonRed : neonBlue
+
+            let signNode = SCNNode(geometry: sign)
+            signNode.position = SCNVector3(
+                centerX,
+                3.5,
+                centerZ - 4.3
+            )
+            root.addChildNode(signNode)
+
+            // Mái che cửa hàng
+            let awning = SCNBox(
+                width: 4.5,
+                height: 0.16,
+                length: 1.2,
+                chamferRadius: 0.04
+            )
+            awning.firstMaterial = index % 2 == 0 ? neonRed : darkRed
+
+            let awningNode = SCNNode(geometry: awning)
+            awningNode.position = SCNVector3(
+                centerX,
+                2.8,
+                centerZ - 4.7
+            )
+            root.addChildNode(awningNode)
         }
     }
+
+    // MARK: - Cột đèn đường
+    for index in 0..<16 {
+        let z = Float(-index * 15)
+
+        let pole = SCNCylinder(radius: 0.08, height: 5)
+        pole.firstMaterial = mat(.gray)
+
+        let poleNode = SCNNode(geometry: pole)
+        poleNode.position = SCNVector3(8, 2.5, z)
+        root.addChildNode(poleNode)
+
+        let lamp = SCNSphere(radius: 0.22)
+        lamp.firstMaterial = mat(.orange, glow: true)
+
+        let lampNode = SCNNode(geometry: lamp)
+        lampNode.position = SCNVector3(8, 5, z)
+        root.addChildNode(lampNode)
+    }
+}
+
 
     
 private func createPlayer() -> SCNNode {
