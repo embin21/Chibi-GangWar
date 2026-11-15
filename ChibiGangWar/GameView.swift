@@ -725,22 +725,7 @@ for crossing in [30, 90, 150] {
     }
 }
 
-    road.firstMaterial = roadMat
-
-    let roadNode = SCNNode(geometry: road)
-    roadNode.position = SCNVector3(0, -0.12, -100)
-    root.addChildNode(roadNode)
-
-    // Vạch đường
-    for i in 0..<30 {
-        let line = SCNBox(width: 0.18, height: 0.015, length: 3, chamferRadius: 0)
-        line.firstMaterial = mat(.yellow)
-
-        let lineNode = SCNNode(geometry: line)
-        lineNode.position = SCNVector3(0, -0.045, Float(-i * 8))
-        root.addChildNode(lineNode)
-    }
-
+    
     // MARK: - Vỉa hè hai bên
     
 // MARK: - Vỉa hè hai bên thành phố
