@@ -572,6 +572,33 @@ final class GameCoordinator: NSObject, SCNSceneRendererDelegate {
 
         let speed: Float = crouching ? 1.4 : 3.5
 
+        
+// MARK: - Character Animation
+let isMoving = abs(inputX) > 0.05 || abs(inputY) > 0.05
+let animationTime = Float(time) * (crouching ? 5.0 : 10.0)
+
+let leftLeg = player.childNode(withName: "leftLeg", recursively: false)
+let rightLeg = player.childNode(withName: "rightLeg", recursively: false)
+let leftArm = player.childNode(withName: "leftArm", recursively: false)
+let rightArm = player.childNode(withName: "rightArm", recursively: false)
+
+let runAmount: Float = isMoving ? 1.0 : 0.0
+
+let legSwing = sin(animationTime) * 0.65 * runAmount
+let armSwing = sin(animationTime + .pi) * 0.55 * runAmount
+
+leftLeg?.eulerAngles.x = legSwing
+rightLeg?.eulerAngles.x = -legSwing
+
+leftArm?.eulerAngles.x = armSwing
+rightArm?.eulerAngles.x = -armSwing
+
+// Cúi người khi ngồi xuống
+if let body = body {
+    body.scale.y = crouching ? 0.65 : 1.0
+    body.eulerAngles.x = crouching ? -0.18 : 0
+}
+
         player.position.x += moveX * speed * delta
         player.position.z += moveZ * speed * delta
 
